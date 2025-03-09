@@ -470,6 +470,23 @@ class Google_Reviews_Importer {
     }
 
     /**
+     * Register ACF JSON save/load points
+     */
+    public function register_acf_json_dir() {
+        // Specify where to save ACF group JSON files
+        add_filter('acf/settings/save_json', function($paths) {
+            $paths[] = plugin_dir_path(__FILE__) . 'acf-json';
+            return $paths;
+        });
+        
+        // Specify where to load ACF group JSON files
+        add_filter('acf/settings/load_json', function($paths) {
+            $paths[] = plugin_dir_path(__FILE__) . 'acf-json';
+            return $paths;
+        });
+    }
+
+    /**
      * Display admin notice after import
      */
     public function display_import_notices() {
