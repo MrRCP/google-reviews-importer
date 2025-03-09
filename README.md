@@ -11,6 +11,23 @@ A WordPress plugin that automatically imports Google reviews as custom testimoni
 - Manual import option for immediate updates
 - GitHub integration for automatic health checks
 
+## Setting Up GitHub Monitoring (Optional)
+
+To enable automated health checks for the plugin:
+
+1. Fork this repository to your own GitHub account
+2. Go to your forked repository's Settings > Secrets and variables > Actions
+3. Add the following secrets:
+   - `GOOGLE_API_KEY`: Your Google API key with Places API enabled
+   - `GOOGLE_PLACE_ID`: Your business's Google Place ID
+   - `MAIL_SERVER`: Your SMTP server (e.g., smtp.gmail.com)
+   - `MAIL_PORT`: SMTP port (e.g., 587)
+   - `MAIL_USERNAME`: Email username
+   - `MAIL_PASSWORD`: Email password or app password
+   - `NOTIFICATION_EMAIL`: Email where you want to receive alerts
+
+These credentials will be used only in your private fork for monitoring your specific installation.
+
 ## Installation
 
 1. Upload the `google-reviews-importer` folder to the `/wp-content/plugins/` directory
