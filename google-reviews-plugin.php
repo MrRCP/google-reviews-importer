@@ -46,6 +46,9 @@ class Google_Reviews_Importer {
         
         // Register settings
         add_action('admin_init', array($this, 'register_settings'));
+
+        // Register ACF json
+        add_action('acf/init', array($this, 'register_acf_json_dir'));
         
         // Add health monitoring dashboard widget
         $this->add_health_check();
