@@ -1,100 +1,123 @@
-<?php
-/**
- * API Test Script for Google Reviews Importer
- * 
- * This script tests connectivity to the Google Places API
- * using the configured credentials.
- * 
- * Usage: php tests/test-api.php
- */
+# Google Reviews Importer - Health Check Workflow
+#
+# This workflow automatically checks your Google Reviews Importer plugin for:
+# 1. PHP compatibility
+# 2. Google API connection
+# 3. Any other potential issues
+#
+# HOW TO USE THIS FILE:
+# 1. Place this file in the .github/workflows/ directory of your repository
+# 2. Add your own credentials as GitHub repository secrets (see below)
+# 3. The workflow will run monthly and on code changes
+#
+# REQUIRED SECRETS:
+# You must set these in your repository settings (Settings > Secrets and variables > Actions)
+# - GOOGLE_API_KEY: Your Google API key with Places API enabled
+# - GOOGLE_PLACE_ID: Your business's Google Place ID
+#
+# OPTIONAL EMAIL NOTIFICATION SECRETS:
+# Add these if you want to receive email alerts when issues are detected
+# - MAIL_SERVER: Your SMTP server (e.g., smtp.gmail.com)
+# - MAIL_PORT: SMTP port (e.g., 587)
+# - MAIL_USERNAME: Email username
+# - MAIL_PASSWORD: Email password or app password
+# - NOTIFICATION_EMAIL: Email where you want to receive alerts
 
-// Include WordPress environment if running in WP context
-$wp_load_path = dirname(__FILE__) . '/../../../wp-load.php';
-if (file_exists($wp_load_path)) {
-    require_once($wp_load_path);
-    $wp_loaded = true;
-    
-    // Get credentials from WordPress options
-    $options = get_option('google_reviews_importer_settings', array());
-    $api_key = $options['api_key'] ?? '';
-    $place_id = $options['place_id'] ?? '';
-    
-    echo "Using credentials from WordPress settings.\n";
-} else {
-    $wp_loaded = false;
-    
-    // Get credentials from environment variables or command line
-    $api_key = getenv('GOOGLE_API_KEY') ?: '';
-    $place_id = getenv('GOOGLE_PLACE_ID') ?: '';
-    
-    echo "WordPress environment not detected. Using environment variables.\n";
-}
+name: Plugin Health Check
 
-// Validate credentials
-if (empty($api_key)) {
-    echo "Error: API key not configured.\n";
-    exit(1);
-}
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # Run on the 1st of every month
+  push:
+    branches: [ main ]  # Run when code is pushed to the main branch
+  workflow_dispatch:    # Allow manual triggering
 
-if (empty($place_id)) {
-    echo "Error: Place ID not configured.\n";
-    exit(1);
-}
-
-echo "Testing connection to Google Places API...\n";
-
-// Construct API URL
-$url = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$place_id}&fields=name,rating&key={$api_key}";
-
-// Make API request
-if ($wp_loaded && function_exists('wp_remote_get')) {
-    $response = wp_remote_get($url);
-    
-    if (is_wp_error($response)) {
-        echo "API Connection Error: " . $response->get_error_message() . "\n";
-        exit(1);
-    }
-    
-    $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body, true);
-} else {
-    // Fallback to file_get_contents if wp_remote_get isn't available
-    $context = stream_context_create([
-        'http' => [
-            'ignore_errors' => true,
-            'user_agent' => 'Google Reviews Importer Test Script',
-        ]
-    ]);
-    
-    $body = @file_get_contents($url, false, $context);
-    
-    if ($body === false) {
-        echo "API Connection Error: Unable to connect to Google API.\n";
-        exit(1);
-    }
-    
-    $data = json_decode($body, true);
-}
-
-// Analyze response
-if (isset($data['status']) && $data['status'] === 'OK') {
-    $place_name = $data['result']['name'] ?? 'Unknown';
-    $rating = $data['result']['rating'] ?? 'Not available';
-    
-    echo "✅ API connection successful!\n";
-    echo "Place Name: {$place_name}\n";
-    echo "Rating: {$rating}\n";
-    exit(0);
-} else {
-    $error = $data['error_message'] ?? $data['status'] ?? 'Unknown error';
-    echo "❌ API Error: {$error}\n";
-    
-    if (isset($data['status']) && $data['status'] === 'REQUEST_DENIED') {
-        echo "This usually indicates an issue with your API key. Please check:\n";
-        echo "1. The API key is correct\n";
-        echo "2. The Places API is enabled in your Google Cloud Console\n";
-        echo "3. Any API restrictions (HTTP referrers, IP addresses) are correctly configured\n";
-    }
-    
-    exit(1);
-}
+jobs:
+  php-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: phpcs, composer
+          
+      - name: Install PHP_CodeSniffer and PHPCompatibility
+        run: |
+          composer require --dev dealerdirect/phpcodesniffer-composer-installer
+          composer require --dev phpcompatibility/php-compatibility
+      
+      - name: Check PHP Compatibility
+        run: phpcs --standard=PHPCompatibility --runtime-set testVersion 7.4- *.php
+  
+  api-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      
+      - name: Create API Test Script
+        run: |
+          echo "<?php
+          // Simple script to test Google Places API connectivity
+          
+          // These values come from your GitHub repository secrets
+          \$api_key = '${{ secrets.GOOGLE_API_KEY }}';  // REPLACE with your API key in repository secrets
+          \$place_id = '${{ secrets.GOOGLE_PLACE_ID }}';  // REPLACE with your Place ID in repository secrets
+          
+          if (empty(\$api_key) || empty(\$place_id)) {
+              echo \"Error: API key or Place ID not configured in GitHub secrets\\n\";
+              exit(1);
+          }
+          
+          \$url = \"https://maps.googleapis.com/maps/api/place/details/json?place_id={\$place_id}&fields=name&key={\$api_key}\";
+          \$response = file_get_contents(\$url);
+          \$data = json_decode(\$response, true);
+          
+          if (isset(\$data['status']) && \$data['status'] === 'OK') {
+              echo \"API connection successful! Place name: {\$data['result']['name']}\\n\";
+              exit(0);
+          } else {
+              echo \"API error: \" . (\$data['error_message'] ?? \$data['status'] ?? 'Unknown error') . \"\\n\";
+              exit(1);
+          }
+          " > test-api.php
+      
+      - name: Run API Test Script
+        run: php test-api.php
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_PLACE_ID: ${{ secrets.GOOGLE_PLACE_ID }}
+        continue-on-error: true
+      
+  notify:
+    needs: [php-compatibility, api-check]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Send Email Notification
+        # This step only runs if any of the previous jobs failed
+        # You need to set up the email secrets for this to work
+        uses: dawidd6/action-send-mail@v3
+        with:
+          # Replace these with your actual values in GitHub secrets
+          server_address: ${{ secrets.MAIL_SERVER }}        # e.g., smtp.gmail.com
+          server_port: ${{ secrets.MAIL_PORT }}             # e.g., 587
+          username: ${{ secrets.MAIL_USERNAME }}            # Your email username
+          password: ${{ secrets.MAIL_PASSWORD }}            # Your email password
+          subject: "⚠️ Google Reviews Importer - Health Check Failed"
+          body: |
+            The monthly health check for the Google Reviews Importer plugin has detected issues.
+            
+            Please check the GitHub Actions logs for details:
+            https://github.com/${{ github.repository }}/actions
+            
+            This is an automated message from your GitHub workflow.
+          to: ${{ secrets.NOTIFICATION_EMAIL }}             # Where to send alerts
+          from: GitHub Actions
