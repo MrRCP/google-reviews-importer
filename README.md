@@ -1,17 +1,87 @@
 # Google Reviews Importer
 
-A WordPress plugin that automatically imports Google reviews as custom testimonials.
+A WordPress plugin that automatically imports Google reviews as testimonials, designed specifically to work with Advanced Custom Fields and Bricks Builder.
+
+**Author:** Richard Peirce (https://rnr.design)
 
 ## Features
 
 - Automatically imports Google reviews on a monthly schedule
-- Creates custom testimonial posts with review data
+- Creates custom testimonial posts with structured review data
 - Admin dashboard widget to monitor plugin health
-- Import history tracking
-- Manual import option for immediate updates
+- Import history tracking with detailed logs
 - GitHub integration for automatic health checks
+- Seamless integration with Bricks Builder
+- Compatible with Advanced Custom Fields (required)
 
-## Setting Up GitHub Monitoring (Optional)
+## Requirements
+
+- WordPress 5.0 or higher
+- PHP 7.4 or higher
+- Advanced Custom Fields plugin (Free or Pro)
+- Google Places API key with proper permissions
+- Bricks Builder (optional, but fully supported)
+
+## Installation
+
+1. Upload the `google-reviews-importer` folder to the `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Go to Settings > Google Reviews to configure your API key and Place ID
+4. Make sure Advanced Custom Fields is installed and activated
+5. The plugin will automatically check for the required ACF fields
+
+## ACF Fields Setup
+
+The plugin requires specific ACF fields for the testimonial post type. You have two options for setting these up:
+
+### Option 1: Automatic Setup
+The plugin includes ACF field configurations that can be automatically loaded. If the required fields are missing, you'll see a notification in the plugin settings.
+
+### Option 2: Manual ACF Setup
+If you prefer to set up the fields manually, create a new ACF Field Group with these fields:
+
+1. **Testimonial Title** (Text)
+   - Field Name: `testimonial_title`
+   - Required: Yes
+
+2. **Testimonial Summary** (Textarea)
+   - Field Name: `testimonial_summary`
+   - Required: No
+
+3. **Testimonial** (Textarea)
+   - Field Name: `testimonial`
+   - Required: Yes
+
+4. **Date** (Date Picker)
+   - Field Name: `testimonial_date`
+   - Required: No
+
+5. **Rating** (Select)
+   - Field Name: `testimonial_rating`
+   - Choices: 1-5 stars
+
+6. **Source** (Select)
+   - Field Name: `testimonial_source`
+   - Default Value: Google
+
+Set the location rule to show this field group when Post Type is equal to "testimonial".
+
+## Bricks Builder Integration
+
+This plugin works seamlessly with Bricks Builder:
+
+1. **Dynamic Data** - Access all review fields through Bricks' dynamic data system
+2. **Custom Templates** - Create custom templates for displaying testimonials
+3. **Query Loop** - Use query loops to display multiple reviews with filtering options
+4. **Star Ratings** - Easily display star ratings using the rating field
+
+Example Bricks Builder setup:
+- Create a template for the testimonial post type
+- Add a query loop to display multiple testimonials
+- Use dynamic data to display reviewer name, date, rating, and review text
+- Filter by rating or date using Bricks query filters
+
+## GitHub Monitoring Setup (Optional)
 
 To enable automated health checks for the plugin:
 
@@ -28,81 +98,21 @@ To enable automated health checks for the plugin:
 
 These credentials will be used only in your private fork for monitoring your specific installation.
 
-## Installation
-
-1. Upload the `google-reviews-importer` folder to the `/wp-content/plugins/` directory
-2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to Settings > Google Reviews to configure your API key and Place ID
-
-## Configuration
-
-### Required Settings
-
-- **Google API Key**: Your Google Cloud Platform API key with Places API enabled
-- **Google Place ID**: The unique identifier for your business location
-
-### Setting Up Google API Key
-
-1. Visit the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Places API
-4. Create an API key and restrict it to the Places API
-5. Add HTTP referrer restrictions to limit usage to your domain
-
-## Usage
-
-The plugin will automatically import new Google reviews once a month. You can also:
-
-- Run a manual import from the Settings > Google Reviews page
-- Check plugin health from the WordPress dashboard
-- View import history on the settings page
-
-## GitHub Integration
-
-This plugin includes GitHub Actions workflows for automated health checks. To set this up:
-
-1. Create a GitHub repository for your plugin
-2. Add the plugin files to the repository
-3. Create a `.github/workflows` directory
-4. Copy the workflow file to that directory
-5. Set up the following GitHub secrets:
-   - `GOOGLE_API_KEY`: Your Google API key
-   - `GOOGLE_PLACE_ID`: Your Google Place ID
-   - `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`: SMTP details for notifications
-   - `NOTIFICATION_EMAIL`: Email to receive alerts
-
-## Requirements
-
-- WordPress 5.0 or higher
-- PHP 7.4 or higher
-- Advanced Custom Fields plugin
-- Testimonial post type (can be created separately)
-
 ## Troubleshooting
 
-### Common Issues
+If you encounter issues:
 
-- **API Key Errors**: Make sure your API key is valid and has the Places API enabled
-- **No Reviews Found**: Verify your Place ID is correct
-- **Import Not Running**: Check your WordPress cron is functioning properly
+- **ACF Fields Not Working**: Ensure ACF is active and field names match what the plugin expects
+- **No Reviews Found**: Verify your Place ID is correct and has reviews
+- **API Connection Errors**: Check that your API key has the Places API enabled
+- **CRON Not Running**: WordPress CRON requires site visits to trigger - consider setting up a server cron
 
-### Debug Mode
+## Customization
 
-For troubleshooting, you can enable more detailed logging by adding this to your wp-config.php:
-
-```php
-define('WP_DEBUG', true);
-define('WP_DEBUG_LOG', true);
-```
-
-## Maintenance
-
-This plugin should be checked regularly for:
-
-1. Google API changes
-2. WordPress compatibility updates
-3. PHP version compatibility
-4. Security improvements
+You can customize:
+- The frequency of imports by modifying the CRON schedule
+- The post type used for testimonials (defaults to "testimonial")
+- The ACF field names and types
 
 ## License
 
@@ -110,4 +120,4 @@ This plugin is licensed under the GPL v2 or later.
 
 ## Credits
 
-Developed by Reflect + Refine
+Developed by Richard Peirce (https://rnr.design)
