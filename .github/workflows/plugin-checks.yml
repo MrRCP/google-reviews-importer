@@ -46,6 +46,8 @@ jobs:
           
       - name: Install PHP_CodeSniffer and PHPCompatibility
         run: |
+          # Fix for Composer plugin security error
+          composer config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer require --dev dealerdirect/phpcodesniffer-composer-installer
           composer require --dev phpcompatibility/php-compatibility
       
@@ -62,8 +64,18 @@ jobs:
         with:
           php-version: '8.1'
       
+      # Using the existing test-api.php file if it exists
+      - name: Check if test file exists
+        id: check_files
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "tests/test-api.php"
+      
+      # If test file doesn't exist, create it
       - name: Create API Test Script
+        if: steps.check_files.outputs.files_exists == 'false'
         run: |
+          mkdir -p tests
           echo "<?php
           // Simple script to test Google Places API connectivity
           
@@ -87,10 +99,10 @@ jobs:
               echo \"API error: \" . (\$data['error_message'] ?? \$data['status'] ?? 'Unknown error') . \"\\n\";
               exit(1);
           }
-          " > test-api.php
+          " > tests/test-api.php
       
       - name: Run API Test Script
-        run: php test-api.php
+        run: php tests/test-api.php
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           GOOGLE_PLACE_ID: ${{ secrets.GOOGLE_PLACE_ID }}
@@ -102,8 +114,8 @@ jobs:
     if: ${{ failure() }}
     steps:
       - name: Send Email Notification
-        # This step only runs if any of the previous jobs failed
-        # You need to set up the email secrets for this to work
+        # Only runs if email secrets are configured
+        if: ${{ secrets.MAIL_SERVER != '' && secrets.NOTIFICATION_EMAIL != '' }}
         uses: dawidd6/action-send-mail@v3
         with:
           # Replace these with your actual values in GitHub secrets
